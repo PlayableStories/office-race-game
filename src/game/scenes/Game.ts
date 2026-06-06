@@ -1,16 +1,15 @@
 import { Scene, Utils, Physics } from 'phaser';
 import { CHARACTERS } from '../config/characters';
 import { RANKS } from '../config/ranks';
+import { PLAYER_TUNING, RACE_TUNING } from '../config/tuning';
 import { Player } from '../objects/Player';
-import { NPC, NPCTier } from '../objects/NPC';
+import { NPC } from '../objects/NPC';
 import { Racer } from '../objects/Racer';
 import { RaceManager, RankChangeEvent, PlayerOvertakeNPCEvent } from '../systems/RaceManager';
 import { HUD } from '../ui/HUD';
 import { RankPopup } from '../ui/RankPopup';
 
-const PLAYER_SCREEN_X = 260;
-const LANE_Y = [550, 620, 690] as const;
-const NPC_TIERS: NPCTier[] = ['slow', 'medium', 'medium', 'fast', 'fast'];
+const { playerScreenX: PLAYER_SCREEN_X, laneY: LANE_Y, npcTiers: NPC_TIERS } = RACE_TUNING;
 
 interface GameOverData {
     finalSalary: number;
@@ -47,7 +46,8 @@ export class Game extends Scene {
         this.raceStarted = false;
         this.npcsSpawned = false;
         this.raceTimer = 0;
-        this.npcSpawnDelay = 3000 + Math.random() * 2000;
+        const [revealMin, revealMax] = RACE_TUNING.npcRevealDelayMsRange;
+        this.npcSpawnDelay = revealMin + Math.random() * (revealMax - revealMin);
         this.idleStopTimer = 0;
         this.nameLabels = new Map();
 
@@ -80,12 +80,10 @@ export class Game extends Scene {
         // Spread NPCs around the player (player starts at raceDistance 0).
         // None starts at 0 — even a tiny gap avoids an overtake on the very first frame
         // before the player can press a key.
-        const NPC_START_DISTANCES = [-360, -200, -100, 160, 320];
-
         this.npcs = npcChars.map((char, i) => {
             const tier = NPC_TIERS[i];
             const lane = laneAssignments[i + 1];
-            const startDistance = NPC_START_DISTANCES[i];
+            const startDistance = RACE_TUNING.npcPreRevealDistances[i];
 
             const npc = new NPC({
                 scene: this,
@@ -120,7 +118,7 @@ export class Game extends Scene {
 
         this.raceManager.events.on('player-overtake-npc', (evt: PlayerOvertakeNPCEvent) => {
             const npc = evt.npc as NPC;
-            npc.startChase(this.player.currentSpeed + 50);
+            npc.startChase(this.player.currentSpeed + RACE_TUNING.chaseTargetOffset);
             this.nameLabels.get(npc)?.setText('AI').setColor('#ff4444');
         });
 
@@ -206,7 +204,7 @@ export class Game extends Scene {
         if (this.raceStarted) {
             if (this.player.currentSpeed <= 0.5) {
                 this.idleStopTimer += delta;
-                if (this.idleStopTimer >= 500) {
+                if (this.idleStopTimer >= RACE_TUNING.idleFireMs) {
                     this.triggerGameOver(this.raceManager.currentSalary, 'idle');
                     return;
                 }
@@ -226,7 +224,8 @@ export class Game extends Scene {
         // 2. Position racers on screen relative to player's race distance
         this.player.x = PLAYER_SCREEN_X;
         const targetPlayerY = LANE_Y[this.player.lane];
-        this.player.y += (targetPlayerY - this.player.y) * Math.min(1, 12 * delta / 1000);
+        this.player.y += (targetPlayerY - this.player.y)
+            * Math.min(1, PLAYER_TUNING.laneChangeLerpSpeed * delta / 1000);
 
         for (const npc of this.npcs) {
             npc.x = PLAYER_SCREEN_X + (npc.raceDistance - this.player.raceDistance);
@@ -259,7 +258,7 @@ export class Game extends Scene {
     private spawnPursuitNPC(): void {
         const char = CHARACTERS[Math.floor(Math.random() * CHARACTERS.length)];
         const lane = Math.floor(Math.random() * 3) as 0 | 1 | 2;
-        const spawnOffset = -700;
+        const spawnOffset = RACE_TUNING.pursuitNpcSpawnOffset;
 
         const npc = new NPC({
             scene: this,
@@ -268,10 +267,10 @@ export class Game extends Scene {
             textureKey: char.textureKey,
             name: char.name,
             lane,
-            tier: 'fast',
+            tier: RACE_TUNING.pursuitNpcTier,
         });
         npc.raceDistance = this.player.raceDistance + spawnOffset;
-        npc.startChase(this.player.currentSpeed + 50, true);
+        npc.startChase(this.player.currentSpeed + RACE_TUNING.pursuitNpcSpeedOffset, true);
         npc.setDepth(20 + lane);
 
         this.npcs.push(npc);
@@ -290,11 +289,11 @@ export class Game extends Scene {
 
     private spawnNPCs(): void {
         // Position all NPCs off-screen ahead of the player and reveal them
-        const SPAWN_OFFSETS = [800, 1600, 2400, 2600, 2800];
+        const offsets = RACE_TUNING.npcSpawnOffsets;
         for (let i = 0; i < this.npcs.length; i++) {
             const npc = this.npcs[i];
-            npc.raceDistance = this.player.raceDistance + SPAWN_OFFSETS[i];
-            npc.x = PLAYER_SCREEN_X + SPAWN_OFFSETS[i];
+            npc.raceDistance = this.player.raceDistance + offsets[i];
+            npc.x = PLAYER_SCREEN_X + offsets[i];
             npc.y = LANE_Y[npc.lane];
             npc.setVisible(true);
             npc.startPaceMode();
