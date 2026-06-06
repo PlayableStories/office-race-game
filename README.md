@@ -48,6 +48,26 @@ Two ways:
 
 In both cases your final salary at the moment of firing is shown on the game-over screen, with the option to retry or go back to the main menu.
 
+## The Design
+
+Four choices shape the game:
+
+- **The pump mechanic.** Speed only comes from *alternating* `←` / `→` — same key twice does nothing. It always decays (`naturalDecel = 90 px/s²`), so the game is an active rhythm exercise, not a hold-down-arrow grind. Implemented in [`src/game/objects/Player.ts`](src/game/objects/Player.ts).
+
+- **Two NPC modes glued to a single overtake event.** Before you pass them, each NPC eases into *pace mode* — a 5-second ramp to `player.currentSpeed − tierGap` (200 / 100 / 50 px/s slower for slow / medium / fast). The instant the player passes one, [`RaceManager`](src/game/systems/RaceManager.ts) emits `player-overtake-npc` and that NPC flips into *chase mode* — a 5-second ramp to `player.currentSpeed + 50`, label changes to `AI`, sprite flashes red ↔ yellow. Pace tunes how hard each tier is to pass; chase means every promotion creates its own pursuer. See [`src/game/objects/NPC.ts`](src/game/objects/NPC.ts).
+
+- **The career ladder is the only failure path.** There is no win state. Get passed at Junior Developer → fired. Stand still for 0.5 s → fired for slacking off. Two distinct game-over flavours, one shared ladder. See `triggerGameOver()` in [`src/game/scenes/Game.ts`](src/game/scenes/Game.ts).
+
+- **All textures are procedural.** Every racer sprite, the office wall, the carpet lanes, the door, the window, the plant, and the bookshelf are drawn at boot from primitives in [`src/game/scenes/Preloader.ts`](src/game/scenes/Preloader.ts). Re-skinning the office is editing one method: `generateTrackTexture()`. This is the load-bearing fork-friendly choice.
+
+## The Concept
+
+Dark satire of the tech-career treadmill, with the treadmill made literal: six racers in office chairs, pumping their feet down a corridor at thirty miles an hour. Every overtake is a promotion. Every promotion comes with a randomized salary multiplier between 2× and 10× — the unpredictability is the point. It is exactly how raises actually feel.
+
+The aim: feel the brief satisfaction of a promotion. Then notice the colleague you just passed is wearing a red `AI` label and gaining on you. Then realise you stopped pumping for half a second and security is escorting you out.
+
+The reference arcs are tech-industry tropes — promotion velocity, AI coming for your job, the cult of *always be shipping*, the slow-then-fast collapse from CEO back to Junior Developer in a single bad week — without naming specific companies. The two firing flavours (**YOU'RE FIRED!** and **SLACKING OFF!**) are the joke's punchline: be out-paced by colleagues, *or* be caught not pumping. Either way, the access card is revoked.
+
 ## Setup
 
 ```sh
@@ -70,6 +90,23 @@ Then open <http://localhost:8080>.
 > `log.js` makes a single anonymous ping to gryzor.co (owned by Phaser Studio) reporting which template was used, dev or prod, and which Phaser version. Use the `-nolog` variants or delete `log.js` to opt out.
 
 Node 18+ is required (Vite 6 + Phaser 4).
+
+## Fork it
+
+The whole point of building games this small is for other people to make them their own. There are two levels of fork — they cost very different amounts of effort.
+
+### Level 1 — Re-theme and re-tune
+
+The game's *skin* and its *feel* are deliberately separated from the engine. Everything you'd touch lives in three config files, two texture methods, and a handful of strings — no game logic.
+
+- **Re-theme.** Replace "Junior Developer → CEO" with "Stable Boy → Royal Stallion" or "Bronze → Grand Master" by editing [`src/game/config/characters.ts`](src/game/config/characters.ts), [`src/game/config/ranks.ts`](src/game/config/ranks.ts), the two texture methods in [`src/game/scenes/Preloader.ts`](src/game/scenes/Preloader.ts), and the on-screen flavour strings. Office chairs become horses; the corridor becomes a racetrack; the mechanics stay.
+- **Re-tune.** All ~26 gameplay knobs — pump boost, decay rate, NPC tier speeds, pace and chase ramp durations, spawn offsets, idle-fire threshold — live in [`src/game/config/tuning.ts`](src/game/config/tuning.ts). Make it easier, harder, faster, more forgiving, more brutal.
+
+Step-by-step in [`FORKING.md`](FORKING.md).
+
+### Level 2 — Rebuild on a different stack
+
+If you want to rebuild the same loop on Unity, Godot, Bevy, or native mobile, sister project [boardroom-game](https://github.com/PlayableStories/boardroom-game) ships a [`REFERENCE_PROMPT.md`](https://github.com/PlayableStories/boardroom-game/blob/main/REFERENCE_PROMPT.md) — a working template for describing a game-engine project to an AI code builder. Adapt it to this game's mechanics: alternating-key pump with decay, three lanes, pace→chase NPCs on overtake, and a career-ladder failure path with two flavours.
 
 ## Tech stack
 

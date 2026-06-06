@@ -1,5 +1,6 @@
 import { Input } from 'phaser';
 import { Racer, RacerConfig } from './Racer';
+import { PLAYER_TUNING } from '../config/tuning';
 
 export class Player extends Racer {
     private cursors!: Phaser.Types.Input.Keyboard.CursorKeys;
@@ -8,10 +9,10 @@ export class Player extends Racer {
 
     private laneChangeCooldown: number = 0;
     private lastKeyPressed: 'left' | 'right' | null = null;
-    private readonly pumpBoost = 80;
+    private readonly pumpBoost = PLAYER_TUNING.pumpBoost;
 
-    override maxSpeed = 630;
-    override naturalDecel = 90;
+    override maxSpeed = PLAYER_TUNING.maxSpeed;
+    override naturalDecel = PLAYER_TUNING.naturalDecel;
 
     constructor(config: RacerConfig) {
         super(config);
@@ -26,10 +27,10 @@ export class Player extends Racer {
         if (this.laneChangeCooldown <= 0) {
             if (Input.Keyboard.JustDown(this.cursors.up) && this.lane > 0) {
                 this.lane--;
-                this.laneChangeCooldown = 300;
+                this.laneChangeCooldown = PLAYER_TUNING.laneChangeCooldownMs;
             } else if (Input.Keyboard.JustDown(this.cursors.down) && this.lane < 2) {
                 this.lane++;
-                this.laneChangeCooldown = 300;
+                this.laneChangeCooldown = PLAYER_TUNING.laneChangeCooldownMs;
             }
         }
 
