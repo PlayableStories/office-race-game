@@ -106,7 +106,9 @@ Step-by-step in [`FORKING.md`](FORKING.md).
 
 ### Level 2 — Rebuild on a different stack
 
-If you want to rebuild the same loop on Unity, Godot, Bevy, or native mobile, sister project [boardroom-game](https://github.com/PlayableStories/boardroom-game) ships a [`REFERENCE_PROMPT.md`](https://github.com/PlayableStories/boardroom-game/blob/main/REFERENCE_PROMPT.md) — a working template for describing a game-engine project to an AI code builder. Adapt it to this game's mechanics: alternating-key pump with decay, three lanes, pace→chase NPCs on overtake, and a career-ladder failure path with two flavours.
+If you want to rebuild the same loop on Unity, Godot, Bevy, native mobile, or any stack that isn't Phaser + Vite + TypeScript, use [`REFERENCE_PROMPT.md`](REFERENCE_PROMPT.md). It's a self-contained spec — paste it into Replit, v0, Cursor, Claude, or any AI code builder, and it walks through a confirmation checklist before writing code. The required mechanics, all ~26 tuning numbers, the NPC state machine, the overtake-detection algorithm, and the three-zone fork architecture are all captured in the prompt itself.
+
+The format is borrowed from sister project [boardroom-game](https://github.com/PlayableStories/boardroom-game), which pioneered the Level 2 pattern.
 
 ## Tech stack
 

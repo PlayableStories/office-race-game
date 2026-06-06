@@ -27,7 +27,7 @@ src/game/
   ui/                           ← engine
 ```
 
-If a change requires editing anything outside the fork surface, it's a rebuild — see Level 2 in the README.
+If a change requires editing anything outside the fork surface, it's a rebuild — see [`REFERENCE_PROMPT.md`](REFERENCE_PROMPT.md) (Level 2).
 
 ---
 
@@ -227,4 +227,4 @@ These changes need engine edits and push you toward Level 2 (rebuild):
 - **Continuous progression instead of discrete ranks** — RaceManager, HUD, and RankPopup all assume discrete rank events.
 - **Different fail rules** — e.g. idle is fine, demoting past rank 0 is fine, time-based fail instead. The two failure paths are hardcoded in `Game.ts:triggerGameOver` and `RaceManager.handleOvertake`.
 
-If your fork needs any of these, you're not re-theming — you're rebuilding. Skip to Level 2 in the README.
+If your fork needs any of these, you're not re-theming — you're rebuilding. See [`REFERENCE_PROMPT.md`](REFERENCE_PROMPT.md) — a self-contained spec you can paste into any AI code builder (Replit, v0, Cursor, Claude) to recreate the game on a different stack.
